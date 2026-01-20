@@ -1,116 +1,116 @@
 """
-Модуль для анализа данных о погоде
+Модуль для анализа погоды
+Простые функции для работы с данными
 """
 import pandas as pd
-from typing import List, Dict
-import json
 
 
-class WeatherAnalyzer:
-    """Класс для анализа данных о погоде"""
+def get_statistics(weather_data):
+    """Рассчитать статистику по погоде"""
+    # Создаем таблицу из данных
+    df = pd.DataFrame(weather_data)
     
-    def __init__(self, weather_data: List[Dict]):
-        """
-        Инициализация анализатора
-        
-        Args:
-            weather_data: Список словарей с данными о погоде
-        """
-        self.df = pd.DataFrame(weather_data)
-        
-    def get_basic_statistics(self) -> Dict:
-        """
-        Получить базовую статистику по температуре
-        
-        Returns:
-            Словарь со статистическими показателями
-        """
-        stats = {
-            'средняя_температура': round(self.df['temperature'].mean(), 2),
-            'максимальная_температура': round(self.df['temperature'].max(), 2),
-            'минимальная_температура': round(self.df['temperature'].min(), 2),
-            'средняя_влажность': round(self.df['humidity'].mean(), 2),
-            'средняя_скорость_ветра': round(self.df['wind_speed'].mean(), 2),
-            'количество_городов': len(self.df)
-        }
-        
-        return stats
+    # Считаем средние значения
+    stats = {
+        'средняя_температура': round(df['temperature'].mean(), 2),
+        'максимальная_температура': round(df['temperature'].max(), 2),
+        'минимальная_температура': round(df['temperature'].min(), 2),
+        'средняя_влажность': round(df['humidity'].mean(), 2),
+        'средняя_скорость_ветра': round(df['wind_speed'].mean(), 2),
+        'количество_городов': len(df)
+    }
     
-    def get_hottest_city(self) -> Dict:
-        """Найти самый тёплый город"""
-        idx = self.df['temperature'].idxmax()
-        city_data = self.df.loc[idx]
-        return {
-            'город': city_data['city'],
-            'температура': city_data['temperature'],
-            'описание': city_data['description']
-        }
+    return stats
+
+
+def find_hottest_city(weather_data):
+    """Найти самый теплый город"""
+    df = pd.DataFrame(weather_data)
+    # Находим индекс максимальной температуры
+    idx = df['temperature'].idxmax()
+    city = df.loc[idx]
     
-    def get_coldest_city(self) -> Dict:
-        """Найти самый холодный город"""
-        idx = self.df['temperature'].idxmin()
-        city_data = self.df.loc[idx]
-        return {
-            'город': city_data['city'],
-            'температура': city_data['temperature'],
-            'описание': city_data['description']
-        }
+    return {
+        'город': city['city'],
+        'температура': city['temperature'],
+        'описание': city['description']
+    }
+
+
+def find_coldest_city(weather_data):
+    """Найти самый холодный город"""
+    df = pd.DataFrame(weather_data)
+    # Находим индекс минимальной температуры
+    idx = df['temperature'].idxmin()
+    city = df.loc[idx]
     
-    def get_most_humid_city(self) -> Dict:
-        """Найти самый влажный город"""
-        idx = self.df['humidity'].idxmax()
-        city_data = self.df.loc[idx]
-        return {
-            'город': city_data['city'],
-            'влажность': city_data['humidity'],
-            'температура': city_data['temperature']
-        }
+    return {
+        'город': city['city'],
+        'температура': city['temperature'],
+        'описание': city['description']
+    }
+
+
+def find_most_humid_city(weather_data):
+    """Найти самый влажный город"""
+    df = pd.DataFrame(weather_data)
+    # Находим индекс максимальной влажности
+    idx = df['humidity'].idxmax()
+    city = df.loc[idx]
     
-    def get_weather_conditions_summary(self) -> Dict:
-        """
-        Получить сводку по погодным условиям
-        
-        Returns:
-            Словарь с количеством городов для каждого типа погоды
-        """
-        return self.df['description'].value_counts().to_dict()
+    return {
+        'город': city['city'],
+        'влажность': city['humidity'],
+        'температура': city['temperature']
+    }
+
+
+def count_weather_conditions(weather_data):
+    """Посчитать количество каждого типа погоды"""
+    df = pd.DataFrame(weather_data)
+    # Считаем сколько раз встречается каждое описание
+    counts = df['description'].value_counts().to_dict()
+    return counts
+
+
+def save_to_csv(weather_data, filename='weather_data.csv'):
+    """Сохранить данные в CSV файл"""
+    df = pd.DataFrame(weather_data)
+    df.to_csv(filename, index=False, encoding='utf-8-sig')
+    print(f"Данные сохранены в файл: {filename}")
+
+
+def print_summary(weather_data):
+    """Вывести красивую сводку по погоде"""
+    print("\n" + "="*60)
+    print("АНАЛИЗ ДАННЫХ О ПОГОДЕ")
+    print("="*60)
     
-    def save_to_csv(self, filename: str = 'weather_data.csv'):
-        """
-        Сохранить данные в CSV файл
-        
-        Args:
-            filename: Имя файла для сохранения
-        """
-        self.df.to_csv(filename, index=False, encoding='utf-8-sig')
-        print(f"Данные сохранены в файл: {filename}")
+    # Общая статистика
+    stats = get_statistics(weather_data)
+    print("\nОБЩАЯ СТАТИСТИКА:")
+    for key, value in stats.items():
+        print(f"  {key}: {value}")
     
-    def print_summary(self):
-        """Вывести краткую сводку по данным"""
-        print("\n" + "="*60)
-        print("АНАЛИЗ ДАННЫХ О ПОГОДЕ")
-        print("="*60)
-        
-        stats = self.get_basic_statistics()
-        print("\nОБЩАЯ СТАТИСТИКА:")
-        for key, value in stats.items():
-            print(f"  {key}: {value}")
-        
-        print("\nСАМЫЙ ТЁПЛЫЙ ГОРОД:")
-        hottest = self.get_hottest_city()
-        print(f"  {hottest['город']}: {hottest['температура']}°C ({hottest['описание']})")
-        
-        print("\nСАМЫЙ ХОЛОДНЫЙ ГОРОД:")
-        coldest = self.get_coldest_city()
-        print(f"  {coldest['город']}: {coldest['температура']}°C ({coldest['описание']})")
-        
-        print("\nСАМЫЙ ВЛАЖНЫЙ ГОРОД:")
-        humid = self.get_most_humid_city()
-        print(f"  {humid['город']}: {humid['влажность']}% (температура: {humid['температура']}°C)")
-        
-        print("\nРАСПРЕДЕЛЕНИЕ ПОГОДНЫХ УСЛОВИЙ:")
-        conditions = self.get_weather_conditions_summary()
-        for condition, count in conditions.items():
-            print(f"  {condition}: {count} город(ов)")
-        
-        print("="*60 + "\n")
+    # Самый теплый город
+    print("\nСАМЫЙ ТЁПЛЫЙ ГОРОД:")
+    hottest = find_hottest_city(weather_data)
+    print(f"  {hottest['город']}: {hottest['температура']}°C ({hottest['описание']})")
+    
+    # Самый холодный город
+    print("\nСАМЫЙ ХОЛОДНЫЙ ГОРОД:")
+    coldest = find_coldest_city(weather_data)
+    print(f"  {coldest['город']}: {coldest['температура']}°C ({coldest['описание']})")
+    
+    # Самый влажный город
+    print("\nСАМЫЙ ВЛАЖНЫЙ ГОРОД:")
+    humid = find_most_humid_city(weather_data)
+    print(f"  {humid['город']}: {humid['влажность']}% (температура: {humid['температура']}°C)")
+    
+    # Распределение погоды
+    print("\nРАСПРЕДЕЛЕНИЕ ПОГОДНЫХ УСЛОВИЙ:")
+    conditions = count_weather_conditions(weather_data)
+    for condition, count in conditions.items():
+        print(f"  {condition}: {count} город(ов)")
+    
+    print("="*60 + "\n")

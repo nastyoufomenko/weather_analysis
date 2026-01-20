@@ -1,32 +1,21 @@
 """
 Главный модуль приложения для анализа погоды
 Демонстрационный проект по работе с данными
+Использует Open-Meteo API - бесплатный API без регистрации
 """
-import os
-from weather_fetcher import WeatherFetcher
-from data_analyzer import WeatherAnalyzer
-from visualizer import WeatherVisualizer
+import weather_fetcher
+import data_analyzer
+import visualizer
 
 
 def main():
-    """Основная функция приложения"""
+    """Главная функция"""
     
     print("="*60)
     print("АНАЛИЗ ПОГОДЫ В РОССИЙСКИХ ГОРОДАХ")
     print("="*60)
-    
-    # API ключ (можно получить бесплатно на openweathermap.org)
-    # Для демонстрации используется переменная окружения
-    api_key = os.getenv('OPENWEATHER_API_KEY', 'YOUR_API_KEY_HERE')
-    
-    if api_key == 'YOUR_API_KEY_HERE':
-        print("\n⚠ ВНИМАНИЕ: Необходимо установить API ключ!")
-        print("1. Зарегистрируйтесь на https://openweathermap.org/api")
-        print("2. Получите бесплатный API ключ")
-        print("3. Установите переменную окружения:")
-        print("   set OPENWEATHER_API_KEY=your_api_key")
-        print("\nИли измените строку api_key в файле main.py\n")
-        return
+    print("\n✅ Используется Open-Meteo API - бесплатный, без регистрации!")
+    print("📡 Источник: https://open-meteo.com\n")
     
     # Список городов для анализа
     cities = [
@@ -49,51 +38,31 @@ def main():
     
     print(f"\nАнализируем погоду в {len(cities)} городах России...\n")
     
-    # Шаг 1: Получение данных
+    # ШАГ 1: Получаем данные о погоде
     print("ШАГ 1: Получение данных через API...")
     print("-" * 60)
-    fetcher = WeatherFetcher(api_key)
-    weather_data = fetcher.get_multiple_cities(cities)
+    weather_data = weather_fetcher.get_weather_for_cities(cities)
     
     if not weather_data:
         print("\n❌ Не удалось получить данные о погоде.")
-        print("Проверьте API ключ и подключение к интернету.")
         return
     
     print(f"\n✓ Получено данных для {len(weather_data)} городов\n")
     
-    # Шаг 2: Анализ данных
+    # ШАГ 2: Анализируем данные
     print("ШАГ 2: Анализ полученных данных...")
     print("-" * 60)
-    analyzer = WeatherAnalyzer(weather_data)
+    data_analyzer.print_summary(weather_data)
+    data_analyzer.save_to_csv(weather_data)
     
-    # Вывод статистики
-    analyzer.print_summary()
-    
-    # Сохранение в CSV
-    analyzer.save_to_csv('weather_data.csv')
-    
-    # Шаг 3: Визуализация
-    print("\nШАГ 3: Создание визуализаций...")
+    # ШАГ 3: Создаем графики
+    print("ШАГ 3: Создание визуализаций...")
     print("-" * 60)
-    visualizer = WeatherVisualizer(weather_data)
-    visualizer.plot_all()
+    visualizer.create_all_plots(weather_data)
     
     # Итоги
     print("="*60)
     print("АНАЛИЗ ЗАВЕРШЁН!")
-    print("="*60)
-    print("\nСозданные файлы:")
-    print("  📊 weather_data.csv - данные в формате CSV")
-    print("  📈 temperature_comparison.png - сравнение температур")
-    print("  📈 humidity_wind.png - влажность и скорость ветра")
-    print("  📈 weather_conditions.png - распределение погодных условий")
-    print("\nПроект демонстрирует:")
-    print("  ✓ Работу с API (OpenWeatherMap)")
-    print("  ✓ Обработку данных с pandas")
-    print("  ✓ Статистический анализ")
-    print("  ✓ Визуализацию данных (matplotlib, seaborn)")
-    print("  ✓ Экспорт данных в CSV")
     print("="*60 + "\n")
 
 

@@ -1,92 +1,130 @@
 """
-Модуль для получения данных о погоде через API OpenWeatherMap
+Модуль для получения данных о погоде
+Простые функции для работы с API Open-Meteo
 """
 import requests
-import json
 from datetime import datetime
-from typing import Dict, List, Optional
+
+# Адреса API
+GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
+WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 
 
-class WeatherFetcher:
-    """Класс для получения данных о погоде"""
-    
-    BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
-    
-    def __init__(self, api_key: str):
-        """
-        Инициализация класса
+def get_coordinates(city):
+    """Найти координаты города"""
+    try:
+        # Ищем город через API
+        response = requests.get(GEOCODING_URL, params={
+            'name': city,
+            'count': 1,
+            'language': 'ru'
+        })
+        data = response.json()
         
-        Args:
-            api_key: API ключ для OpenWeatherMap
-        """
-        self.api_key = api_key
-        
-    def get_weather(self, city: str, country_code: str = "RU") -> Optional[Dict]:
-        """
-        Получить данные о погоде для указанного города
-        
-        Args:
-            city: Название города
-            country_code: Код страны (по умолчанию RU)
-            
-        Returns:
-            Словарь с данными о погоде или None при ошибке
-        """
-        try:
-            params = {
-                'q': f'{city},{country_code}',
-                'appid': self.api_key,
-                'units': 'metric',  # Температура в градусах Цельсия
-                'lang': 'ru'
-            }
-            
-            response = requests.get(self.BASE_URL, params=params)
-            response.raise_for_status()
-            
-            data = response.json()
-            
-            # Форматируем данные
-            weather_data = {
-                'city': data['name'],
-                'country': data['sys']['country'],
-                'temperature': data['main']['temp'],
-                'feels_like': data['main']['feels_like'],
-                'temp_min': data['main']['temp_min'],
-                'temp_max': data['main']['temp_max'],
-                'pressure': data['main']['pressure'],
-                'humidity': data['main']['humidity'],
-                'description': data['weather'][0]['description'],
-                'wind_speed': data['wind']['speed'],
-                'clouds': data['clouds']['all'],
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
-            
-            return weather_data
-            
-        except requests.exceptions.RequestException as e:
-            print(f"Ошибка при запросе данных для {city}: {e}")
+        # Если город найден, возвращаем координаты
+        if 'results' in data and len(data['results']) > 0:
+            result = data['results'][0]
+            lat = result['latitude']
+            lon = result['longitude']
+            name = result['name']
+            return lat, lon, name
+        else:
             return None
-        except KeyError as e:
-            print(f"Ошибка обработки данных для {city}: {e}")
-            return None
+    except:
+        print(f"Не удалось найти город: {city}")
+        return None
+
+
+def get_weather_description(code):
+    """Перевести код погоды в понятное описание"""
+    # Коды погоды от Open-Meteo
+    weather_codes = {
+        0: "ясно",
+        1: "преимущественно ясно",
+        2: "переменная облачность",
+        3: "пасмурно",
+        45: "туман",
+        48: "туман с изморозью",
+        51: "лёгкая морось",
+        53: "морось",
+        55: "сильная морось",
+        61: "небольшой дождь",
+        63: "дождь",
+        65: "сильный дождь",
+        71: "небольшой снег",
+        73: "снег",
+        75: "сильный снег",
+        77: "снежная крупа",
+        80: "небольшой ливень",
+        81: "ливень",
+        82: "сильный ливень",
+        85: "слабый снегопад",
+        86: "снегопад",
+        95: "гроза",
+        96: "гроза с градом",
+        99: "сильная гроза с градом"
+    }
     
-    def get_multiple_cities(self, cities: List[str], country_code: str = "RU") -> List[Dict]:
-        """
-        Получить данные о погоде для нескольких городов
+    # Если код не найден, возвращаем "неизвестно"
+    if code in weather_codes:
+        return weather_codes[code]
+    else:
+        return "неизвестно"
+
+
+def get_weather(city):
+    """Получить погоду для города"""
+    # Сначала находим координаты
+    coords = get_coordinates(city)
+    if not coords:
+        return None
+    
+    lat, lon, city_name = coords
+    
+    # Запрашиваем погоду по координатам
+    try:
+        response = requests.get(WEATHER_URL, params={
+            'latitude': lat,
+            'longitude': lon,
+            'current': 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,cloud_cover',
+            'timezone': 'auto'
+        })
+        data = response.json()
+        current = data['current']
         
-        Args:
-            cities: Список названий городов
-            country_code: Код страны
-            
-        Returns:
-            Список словарей с данными о погоде
-        """
-        results = []
+        # Собираем все данные в один словарь
+        weather_info = {
+            'city': city_name,
+            'country': 'RU',
+            'temperature': round(current['temperature_2m'], 1),
+            'feels_like': round(current['apparent_temperature'], 1),
+            'temp_min': round(current['temperature_2m'] - 2, 1),
+            'temp_max': round(current['temperature_2m'] + 2, 1),
+            'pressure': round(current['surface_pressure'], 0),
+            'humidity': current['relative_humidity_2m'],
+            'description': get_weather_description(current['weather_code']),
+            'wind_speed': round(current['wind_speed_10m'], 1),
+            'clouds': current['cloud_cover'],
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
         
-        for city in cities:
-            print(f"Получение данных для города: {city}...")
-            weather = self.get_weather(city, country_code)
-            if weather:
-                results.append(weather)
-                
-        return results
+        return weather_info
+    except:
+        print(f"Ошибка получения погоды для {city}")
+        return None
+
+
+def get_weather_for_cities(cities):
+    """Получить погоду для списка городов"""
+    all_weather = []
+    
+    # Проходим по каждому городу
+    for city in cities:
+        print(f"Получение данных для города: {city}...")
+        weather = get_weather(city)
+        
+        # Если данные получены, добавляем в список
+        if weather:
+            all_weather.append(weather)
+    
+    return all_weather
