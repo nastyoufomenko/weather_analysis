@@ -1,0 +1,54 @@
+# Байт-скомпилированные / оптимизированные / DLL файлы
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C расширения
+*.so
+
+# Виртуальные окружения
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Переменные окружения
+.env
+.env.local
+
+# Результаты работы программы
+*.csv
+*.png
+*.jpg
+*.jpeg
+
+# Логи
+*.log
+
+# Операционная система
+.DS_Store
+Thumbs.db
+
+# API ключи (никогда не коммитить!)
+api_keys.txt
+config.ini
+
+# Тесты
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Распространение / упаковка
+dist/
+build/
+*.egg-info/
